@@ -28,9 +28,6 @@ namespace CourseAPI.Controllers
             if (_courseRepository.GetCourse(id) is null)
                 return NotFound();
 
-            if (course.Name is null || course.Name == string.Empty)
-                return BadRequest(); // return 405 not allowed
-
             _courseRepository.UpdateCourse(id, course);
             return Ok(_courseRepository.GetCourses());
         }
@@ -43,9 +40,7 @@ namespace CourseAPI.Controllers
             if (course is null)
                 return NotFound();
 
-            //courses = courses.Where(c => c.ID != id).ToList();
             _courseRepository.DeleteCourse(course);
-
             return Ok(_courseRepository.GetCourses());
         }
         
@@ -64,18 +59,20 @@ namespace CourseAPI.Controllers
         [HttpPost]
         public ActionResult<Course> Post([FromBody] Course course)
         {
-            if (course.Credits > 20)
-                return BadRequest();
+            if (course.Credits < 0 || course.Credits > 20)
+                ModelState.AddModelError("Description", "Invalid Credits. Allowed range: 0-20");
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             _courseRepository.AddCourse(course);
-
             return Created($"https://localhost/api/courses/{course.ID}", course);
         }
 
         [HttpGet]
-        public List<Course> Get()
+        public ActionResult<List<Course>> Get()
         {
-            return _courseRepository.GetCourses();
+            return Ok(_courseRepository.GetCourses());
         }
 
         [HttpGet("{id:int}")]
