@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using CourseAPI.Models;
+using CourseAPI.Repositories;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -13,73 +14,79 @@ namespace CourseAPI.Controllers
     public class CoursesController : ControllerBase
     {
         private readonly ILogger _logger;
-        private static List<Course> courses;
+        private readonly ICourseRepository _courseRepository;
 
-        public CoursesController(ILogger<CoursesController> logger)
+        public CoursesController(ILogger<CoursesController> logger, ICourseRepository courseRepository)
         {
             _logger = logger;
-            AddDummyCourses();
-        }
-
-        private void AddDummyCourses()
-        {
-            courses = new List<Course>();
-            courses.Add(new Course
-            {
-                ID = 0,
-                Name = "ASPNET",
-                Credits = 10
-            });
-
-            courses.Add(new Course
-            {
-                ID = 1,
-                Name = "Python",
-                Credits = 5
-            });
-
-            courses.Add(new Course
-            {
-                ID = 2,
-                Name = "Javascript",
-                Credits = 2
-            });
+            _courseRepository = courseRepository;
         }
 
         [HttpPut("{id:int}")]
         public ActionResult<List<Course>> Put(int id, [FromBody] Course course)
         {
+            if (_courseRepository.GetCourse(id) is null)
+                return NotFound();
+
             if (course.Name is null || course.Name == string.Empty)
                 return BadRequest(); // return 405 not allowed
 
-            var updatedCourses = courses.Select(c => (c.ID == id) ? course : c).ToList();
-            courses = updatedCourses;
-            return Ok(updatedCourses);
+            _courseRepository.UpdateCourse(id, course);
+            return Ok(_courseRepository.GetCourses());
         }
 
         [HttpDelete("{id:int}")]
         public ActionResult<List<Course>> Delete(int id)
         {
-            courses = courses.Where(c => c.ID != id).ToList();
-            return Ok(courses);
+            Course course = _courseRepository.GetCourse(id);
+
+            if (course is null)
+                return NotFound();
+
+            //courses = courses.Where(c => c.ID != id).ToList();
+            _courseRepository.DeleteCourse(course);
+
+            return Ok(_courseRepository.GetCourses());
         }
         
         [HttpPatch("{id:int}")]
         public ActionResult<List<Course>> Patch(int id, [FromBody] JsonPatchDocument<Course> coursePatch)
         {
-            Course course;
+            Course course = _courseRepository.GetCourse(id);
 
-            try
-            {
-                course = courses.First(c => c.ID == id);
-            }
-            catch (Exception e)
-            {
-                return BadRequest();
-            }
+            if (course is null)
+                return NotFound();
 
             coursePatch.ApplyTo(course);
-            return courses;
+            return Ok(_courseRepository.GetCourses());
+        }
+
+        [HttpPost]
+        public ActionResult<Course> Post([FromBody] Course course)
+        {
+            if (course.Credits > 20)
+                return BadRequest();
+
+            _courseRepository.AddCourse(course);
+
+            return Created($"https://localhost/api/courses/{course.ID}", course);
+        }
+
+        [HttpGet]
+        public List<Course> Get()
+        {
+            return _courseRepository.GetCourses();
+        }
+
+        [HttpGet("{id:int}")]
+        public ActionResult<List<Course>> Get(int id)
+        {
+            Course course = _courseRepository.GetCourse(id);
+
+            if (course is null)
+                return NotFound();
+
+            return Ok(course);
         }
     }
 }
