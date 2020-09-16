@@ -27,7 +27,7 @@ namespace CourseAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers().AddNewtonsoftJson();
-            services.AddScoped<ICourseRepository, CourseRepository>();
+            services.AddSingleton<ICourseRepository, CourseRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
