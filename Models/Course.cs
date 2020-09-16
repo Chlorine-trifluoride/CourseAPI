@@ -12,8 +12,9 @@ namespace CourseAPI.Models
 
         [Required]
         public string Name { get; set; }
-
+        
         [Required]
-        public int Credits { get; set; }
+        [Range(0, 20)]
+        public int? Credits { get; set; }
     }
 }

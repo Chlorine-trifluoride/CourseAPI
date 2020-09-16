@@ -59,11 +59,11 @@ namespace CourseAPI.Controllers
         [HttpPost]
         public ActionResult<Course> Post([FromBody] Course course)
         {
-            if (course.Credits < 0 || course.Credits > 20)
-                ModelState.AddModelError("Description", "Invalid Credits. Allowed range: 0-20");
+            //if (course.Credits < 0 || course.Credits > 20)
+            //    ModelState.AddModelError("Description", "Invalid Credits. Allowed range: 0-20");
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            //if (!ModelState.IsValid)
+            //    return BadRequest(ModelState);
 
             _courseRepository.AddCourse(course);
             return Created($"https://localhost/api/courses/{course.ID}", course);
