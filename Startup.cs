@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CourseAPI.Contexts;
 using CourseAPI.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,7 +29,11 @@ namespace CourseAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers().AddNewtonsoftJson();
-            services.AddSingleton<ICourseRepository, CourseRepository>();
+            services.AddScoped<ICourseRepository, CourseRepository>();
+
+            services.AddDbContext<CoursesContext>(o => o.UseNpgsql(
+                @"<CONNECTION STRING REMOVED FROM REPO>"));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

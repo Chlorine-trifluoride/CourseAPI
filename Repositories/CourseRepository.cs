@@ -1,4 +1,6 @@
-﻿using CourseAPI.Models;
+﻿using CourseAPI.Contexts;
+using CourseAPI.Models;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -9,46 +11,24 @@ namespace CourseAPI.Repositories
 {
     public class CourseRepository : ICourseRepository
     {
-        private List<Course> courses;
+        private readonly ILogger<CourseRepository> _logger;
+        private readonly CoursesContext _context;
 
-        public CourseRepository(ILogger<CourseRepository> logger)
+        public CourseRepository(ILogger<CourseRepository> logger, CoursesContext coursesContext)
         {
-            courses = new List<Course>();
-            AddDummyCourses();
-        }
-        private void AddDummyCourses()
-        {
-            courses = new List<Course>();
-            courses.Add(new Course
-            {
-                ID = 0,
-                Name = "ASPNET",
-                Credits = 10
-            });
-
-            courses.Add(new Course
-            {
-                ID = 1,
-                Name = "Python",
-                Credits = 5
-            });
-
-            courses.Add(new Course
-            {
-                ID = 2,
-                Name = "Javascript",
-                Credits = 2
-            });
+            _logger = logger;
+            _context = coursesContext;
         }
 
         public void AddCourse(Course course)
         {
-            if (courses.Count == 0)
+            if (_context.Courses.Count() == 0)
                 course.ID = 0;
             else
-                course.ID = courses.Last().ID + 1;
+                course.ID = _context.Courses.ToList().Last().ID + 1;
 
-            courses.Add(course);
+            _context.Add(course);
+            _context.SaveChanges();
         }
 
         // Useless
@@ -59,25 +39,29 @@ namespace CourseAPI.Repositories
 
         public void DeleteCourse(Course course)
         {
-            courses.Remove(course);
+            _context.Remove(course);
+            _context.SaveChanges();
         }
 
         public Course GetCourse(int id)
         {
-            return courses.FirstOrDefault(c => c.ID == id);
+            return _context.Courses.FirstOrDefault(c => c.ID == id);
         }
 
         public List<Course> GetCourses()
         {
-            return courses;
+            return _context.Courses.ToList();
         }
 
         public void UpdateCourse(int id, Course updatedCourse)
         {
-            Course course = courses.First(c => c.ID == id);
-            int index = courses.IndexOf(course);
+            Course course = _context.Courses.First(c => c.ID == id);
 
-            courses[index] = updatedCourse;
+            course.Credits = updatedCourse.Credits;
+            course.Name = updatedCourse.Name;
+
+            _context.Update(course);
+            _context.SaveChanges();
         }
     }
 }
